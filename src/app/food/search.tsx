@@ -1,5 +1,6 @@
 import { BarcodeScanner } from "@/src/components/BarcodeScanner";
 import { ProductDetails } from "@/src/components/ProductDetails";
+import { Skeleton, SkeletonText } from "@/src/components/ui";
 import { useAppTheme } from "@/src/hooks/useAppTheme";
 import {
   DetailedProduct,
@@ -13,7 +14,6 @@ import { Link, router } from "expo-router";
 import { ArrowLeftIcon, Plus, ScanBarcode } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -245,16 +245,43 @@ export default function FoodSearch() {
   if (isLoading) {
     return (
       <View
-        className="flex-1 items-center justify-center"
+        className="flex-1 pt-16 px-6"
         style={{ backgroundColor: colors["bg-200"] }}
       >
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text
-          className="mt-4 text-lg"
-          style={{ color: colors["bg-text-muted"] }}
+        {/* Header Skeleton */}
+        <View className="mb-6">
+          <Skeleton width={120} height={32} style={{ marginBottom: 12 }} />
+          <Skeleton width="80%" height={24} />
+        </View>
+
+        {/* Product Image Skeleton */}
+        <View className="items-center mb-6">
+          <Skeleton width={200} height={200} borderRadius={12} />
+        </View>
+
+        {/* Product Info Skeleton */}
+        <View
+          className="p-4 rounded-xl mb-4"
+          style={{ backgroundColor: colors["bg-100"] }}
         >
-          Looking up product...
-        </Text>
+          <Skeleton width="70%" height={24} style={{ marginBottom: 8 }} />
+          <Skeleton width="50%" height={20} style={{ marginBottom: 16 }} />
+          <SkeletonText lines={3} lastLineWidth="60%" />
+        </View>
+
+        {/* Nutrition Card Skeleton */}
+        <View
+          className="p-4 rounded-xl mb-4"
+          style={{ backgroundColor: colors["bg-100"] }}
+        >
+          <Skeleton width="60%" height={20} style={{ marginBottom: 12 }} />
+          <Skeleton width="100%" height={8} style={{ marginBottom: 8 }} />
+          <Skeleton width="100%" height={8} style={{ marginBottom: 8 }} />
+          <Skeleton width="100%" height={8} />
+        </View>
+
+        {/* Action Button Skeleton */}
+        <Skeleton width="100%" height={56} borderRadius={12} />
       </View>
     );
   }
@@ -367,6 +394,8 @@ export default function FoodSearch() {
         visible={scannerVisible}
         onClose={() => setScannerVisible(false)}
         onBarcodeScanned={handleBarcodeScanned}
+        permissionGranted={permission?.granted ?? false}
+        onRequestPermission={requestPermission}
       />
 
       {/* Results based on active tab */}

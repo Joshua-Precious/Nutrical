@@ -239,7 +239,7 @@ export default function ProfileScreen() {
                   value={isDarkMode}
                   onValueChange={toggleDarkMode}
                   trackColor={{ false: colors["bg-300"], true: colors.primary }}
-                  thumbColor="#fff"
+                  thumbColor={colors.white}
                 />
               </View>
             </View>
@@ -550,8 +550,8 @@ export default function ProfileScreen() {
                               (parseFloat(fatRatio) || 0) -
                               100
                           ) < 0.1
-                            ? "#10b981"
-                            : "#ef4444",
+                            ? colors.success
+                            : colors.danger,
                       }}
                     >
                       {(

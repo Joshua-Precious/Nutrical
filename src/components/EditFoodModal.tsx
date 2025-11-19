@@ -2,7 +2,7 @@ import { Button, Card } from "@/src/components/ui";
 import { useAppTheme } from "@/src/hooks/useAppTheme";
 import { FoodLog, MealCategory, useLogStore } from "@/src/stores/log.store";
 import * as Haptics from "expo-haptics";
-import { X } from "lucide-react-native";
+import { ChevronDown, ChevronUp, X } from "lucide-react-native";
 import { useState } from "react";
 import {
   Modal,
@@ -34,6 +34,7 @@ export function EditFoodModal({ visible, log, onClose }: EditFoodModalProps) {
     log?.servingQty.toString() ?? "1"
   );
   const [meal, setMeal] = useState<MealCategory>(log?.meal ?? "breakfast");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSave = () => {
     if (!log) return;
@@ -91,7 +92,17 @@ export function EditFoodModal({ visible, log, onClose }: EditFoodModalProps) {
               >
                 Edit Food Entry
               </Text>
-              <Pressable onPress={onClose}>
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close edit food modal"
+                style={{
+                  minHeight: 44,
+                  minWidth: 44,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <X size={24} color={colors["bg-text"]} />
               </Pressable>
             </View>
@@ -163,7 +174,11 @@ export function EditFoodModal({ visible, log, onClose }: EditFoodModalProps) {
                         meal === option.value
                           ? colors.primary
                           : colors["bg-200"],
+                      minHeight: 44,
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select ${option.label} meal`}
+                    accessibilityState={{ selected: meal === option.value }}
                   >
                     <Text className="text-base">{option.emoji}</Text>
                     <Text
@@ -181,58 +196,92 @@ export function EditFoodModal({ visible, log, onClose }: EditFoodModalProps) {
             </View>
 
             {/* Nutrition Preview */}
-            <Card
-              className="mb-6"
-              style={{ backgroundColor: colors["bg-200"] }}
+            <Pressable
+              onPress={() => {
+                setShowAdvanced(!showAdvanced);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                showAdvanced
+                  ? "Hide nutrition details"
+                  : "Show nutrition details"
+              }
             >
-              <Text
-                className="text-sm font-semibold mb-2"
-                style={{ color: colors["bg-text"] }}
+              <Card
+                className="mb-6"
+                style={{ backgroundColor: colors["bg-200"] }}
               >
-                Nutrition Preview
-              </Text>
-              <View className="flex-row justify-between">
-                <Text style={{ color: colors["bg-text-muted"] }}>Calories</Text>
-                <Text
-                  className="font-bold"
-                  style={{ color: colors["bg-text"] }}
-                >
-                  {Math.round(
-                    (log.calories * (parseFloat(servingQty) || 1)) /
-                      log.servingQty
-                  )}{" "}
-                  kcal
-                </Text>
-              </View>
-              <View className="flex-row justify-between mt-1">
-                <Text style={{ color: colors["bg-text-muted"] }}>Protein</Text>
-                <Text style={{ color: colors["bg-text"] }}>
-                  {Math.round(
-                    (log.protein * (parseFloat(servingQty) || 1)) /
-                      log.servingQty
+                <View className="flex-row justify-between items-center mb-2">
+                  <Text
+                    className="text-sm font-semibold"
+                    style={{ color: colors["bg-text"] }}
+                  >
+                    Nutrition Preview
+                  </Text>
+                  {showAdvanced ? (
+                    <ChevronUp size={20} color={colors["bg-text-muted"]} />
+                  ) : (
+                    <ChevronDown size={20} color={colors["bg-text-muted"]} />
                   )}
-                  g
-                </Text>
-              </View>
-              <View className="flex-row justify-between mt-1">
-                <Text style={{ color: colors["bg-text-muted"] }}>Carbs</Text>
-                <Text style={{ color: colors["bg-text"] }}>
-                  {Math.round(
-                    (log.carbs * (parseFloat(servingQty) || 1)) / log.servingQty
-                  )}
-                  g
-                </Text>
-              </View>
-              <View className="flex-row justify-between mt-1">
-                <Text style={{ color: colors["bg-text-muted"] }}>Fat</Text>
-                <Text style={{ color: colors["bg-text"] }}>
-                  {Math.round(
-                    (log.fat * (parseFloat(servingQty) || 1)) / log.servingQty
-                  )}
-                  g
-                </Text>
-              </View>
-            </Card>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text style={{ color: colors["bg-text-muted"] }}>
+                    Calories
+                  </Text>
+                  <Text
+                    className="font-bold"
+                    style={{ color: colors["bg-text"] }}
+                  >
+                    {Math.round(
+                      (log.calories * (parseFloat(servingQty) || 1)) /
+                        log.servingQty
+                    )}{" "}
+                    kcal
+                  </Text>
+                </View>
+                {showAdvanced && (
+                  <>
+                    <View className="flex-row justify-between mt-1">
+                      <Text style={{ color: colors["bg-text-muted"] }}>
+                        Protein
+                      </Text>
+                      <Text style={{ color: colors["bg-text"] }}>
+                        {Math.round(
+                          (log.protein * (parseFloat(servingQty) || 1)) /
+                            log.servingQty
+                        )}
+                        g
+                      </Text>
+                    </View>
+                    <View className="flex-row justify-between mt-1">
+                      <Text style={{ color: colors["bg-text-muted"] }}>
+                        Carbs
+                      </Text>
+                      <Text style={{ color: colors["bg-text"] }}>
+                        {Math.round(
+                          (log.carbs * (parseFloat(servingQty) || 1)) /
+                            log.servingQty
+                        )}
+                        g
+                      </Text>
+                    </View>
+                    <View className="flex-row justify-between mt-1">
+                      <Text style={{ color: colors["bg-text-muted"] }}>
+                        Fat
+                      </Text>
+                      <Text style={{ color: colors["bg-text"] }}>
+                        {Math.round(
+                          (log.fat * (parseFloat(servingQty) || 1)) /
+                            log.servingQty
+                        )}
+                        g
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </Card>
+            </Pressable>
 
             {/* Actions */}
             <View className="flex-row gap-2">

@@ -5,7 +5,14 @@ import { NutritionalInsights } from "@/src/components/NutritionalInsights";
 import { StreakTracker } from "@/src/components/StreakTracker";
 import { WaterTracker } from "@/src/components/WaterTracker";
 import { WeeklyProgress } from "@/src/components/WeeklyProgress";
-import { Button, Card, EmptyState, ProgressBar } from "@/src/components/ui";
+import {
+  Button,
+  Card,
+  EmptyState,
+  FloatingButton,
+  ProgressBar,
+  SectionHeader,
+} from "@/src/components/ui";
 import { useAppTheme } from "@/src/hooks/useAppTheme";
 import { FoodLog, useLogStore } from "@/src/stores/log.store";
 import { useUserStore } from "@/src/stores/user.store";
@@ -14,9 +21,9 @@ import {
   getDefaultMacroRatios,
 } from "@/src/utils/calorie";
 import { getTodayKey } from "@/src/utils/date";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { Plus, UserRound, UtensilsCrossed } from "lucide-react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 export default function HomeScreen() {
@@ -28,36 +35,80 @@ export default function HomeScreen() {
 
   const [editingLog, setEditingLog] = useState<FoodLog | null>(null);
 
-  // Calculate totals
-  const totalCalories = todayLogs.reduce((sum, l) => sum + l.calories, 0);
-  const protein = todayLogs.reduce((sum, l) => sum + l.protein, 0);
-  const carbs = todayLogs.reduce((sum, l) => sum + l.carbs, 0);
-  const fat = todayLogs.reduce((sum, l) => sum + l.fat, 0);
-  const goal = profile?.calorieTarget ?? 0;
-  const progress = goal > 0 ? Math.min(1, totalCalories / goal) : 0;
-  const caloriesRemaining = goal - totalCalories;
+  // Memoize macro targets calculation - only recalculate when profile changes
+  const macroTargets = useMemo(() => {
+    const goal = profile?.calorieTarget ?? 0;
+    if (goal === 0) return { protein: 0, carbs: 0, fat: 0 };
 
-  // Calculate macro targets
-  const macroRatios =
-    profile?.macroRatios ??
-    (profile?.goal
-      ? getDefaultMacroRatios(profile.goal)
-      : { protein: 30, carbs: 40, fat: 30 });
-  const macroTargets =
-    goal > 0
-      ? calculateMacroTargets(goal, macroRatios)
-      : { protein: 0, carbs: 0, fat: 0 };
+    const macroRatios =
+      profile?.macroRatios ??
+      (profile?.goal
+        ? getDefaultMacroRatios(profile.goal)
+        : { protein: 30, carbs: 40, fat: 30 });
 
-  // Group by meal category
-  const breakfastLogs = todayLogs.filter((l) => l.meal === "breakfast");
-  const lunchLogs = todayLogs.filter((l) => l.meal === "lunch");
-  const dinnerLogs = todayLogs.filter((l) => l.meal === "dinner");
-  const snackLogs = todayLogs.filter((l) => l.meal === "snack");
+    return calculateMacroTargets(goal, macroRatios);
+  }, [profile?.calorieTarget, profile?.macroRatios, profile?.goal]);
 
-  const breakfastCals = breakfastLogs.reduce((sum, l) => sum + l.calories, 0);
-  const lunchCals = lunchLogs.reduce((sum, l) => sum + l.calories, 0);
-  const dinnerCals = dinnerLogs.reduce((sum, l) => sum + l.calories, 0);
-  const snackCals = snackLogs.reduce((sum, l) => sum + l.calories, 0);
+  // Memoize totals and meal breakdowns - only recalculate when logs change
+  const nutritionSummary = useMemo(() => {
+    const totalCalories = todayLogs.reduce((sum, l) => sum + l.calories, 0);
+    const protein = todayLogs.reduce((sum, l) => sum + l.protein, 0);
+    const carbs = todayLogs.reduce((sum, l) => sum + l.carbs, 0);
+    const fat = todayLogs.reduce((sum, l) => sum + l.fat, 0);
+
+    // Group by meal category
+    const breakfastLogs = todayLogs.filter((l) => l.meal === "breakfast");
+    const lunchLogs = todayLogs.filter((l) => l.meal === "lunch");
+    const dinnerLogs = todayLogs.filter((l) => l.meal === "dinner");
+    const snackLogs = todayLogs.filter((l) => l.meal === "snack");
+
+    return {
+      totalCalories,
+      protein,
+      carbs,
+      fat,
+      breakfastLogs,
+      lunchLogs,
+      dinnerLogs,
+      snackLogs,
+      breakfastCals: breakfastLogs.reduce((sum, l) => sum + l.calories, 0),
+      lunchCals: lunchLogs.reduce((sum, l) => sum + l.calories, 0),
+      dinnerCals: dinnerLogs.reduce((sum, l) => sum + l.calories, 0),
+      snackCals: snackLogs.reduce((sum, l) => sum + l.calories, 0),
+    };
+  }, [todayLogs]);
+
+  // Memoize progress calculations - only recalculate when totals or targets change
+  const progressValues = useMemo(() => {
+    const goal = profile?.calorieTarget ?? 0;
+    const calorieProgress =
+      goal > 0 ? Math.min(1, nutritionSummary.totalCalories / goal) : 0;
+    const caloriesRemaining = goal - nutritionSummary.totalCalories;
+
+    return {
+      goal,
+      calorieProgress,
+      caloriesRemaining,
+      proteinProgress:
+        macroTargets.protein > 0
+          ? Math.max(
+              0,
+              Math.min(1, nutritionSummary.protein / macroTargets.protein)
+            )
+          : 0,
+      carbsProgress:
+        macroTargets.carbs > 0
+          ? Math.max(
+              0,
+              Math.min(1, nutritionSummary.carbs / macroTargets.carbs)
+            )
+          : 0,
+      fatProgress:
+        macroTargets.fat > 0
+          ? Math.max(0, Math.min(1, nutritionSummary.fat / macroTargets.fat))
+          : 0,
+    };
+  }, [profile?.calorieTarget, nutritionSummary, macroTargets]);
 
   return (
     <View style={{ backgroundColor: colors["bg-200"] }} className="flex-1">
@@ -82,7 +133,12 @@ export default function HomeScreen() {
         </View>
 
         <Link href="/(tabs)/profile" asChild>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            accessibilityLabel="Go to profile settings"
+            accessibilityRole="button"
+          >
             <UserRound size={32} color={colors["bg-text"]} />
           </Button>
         </Link>
@@ -92,23 +148,35 @@ export default function HomeScreen() {
         <View className="px-6 gap-6">
           {/* Onboarding CTA */}
           {!profile && (
-            <Card>
-              <Text
-                className="text-2xl font-bold mb-2"
-                style={{ color: colors["bg-text"] }}
-              >
-                Welcome to NutriCal! 👋
-              </Text>
-              <Text
-                className="text-base mb-4"
-                style={{ color: colors["bg-text-muted"] }}
-              >
-                Set up your profile to get a personalized calorie target and
-                start tracking your nutrition.
-              </Text>
-              <Link href="/onboarding" asChild>
-                <Button variant="primary">Start Onboarding</Button>
-              </Link>
+            <Card style={{ borderWidth: 2, borderColor: colors.primary }}>
+              <View className="items-center">
+                <Text className="text-4xl mb-3">👋</Text>
+                <Text
+                  className="text-2xl font-bold mb-2 text-center"
+                  style={{ color: colors["bg-text"] }}
+                >
+                  Welcome to NutriCal!
+                </Text>
+                <Text
+                  className="text-base mb-6 text-center"
+                  style={{ color: colors["bg-text-muted"], lineHeight: 22 }}
+                >
+                  Set up your personalized profile to get your calorie target,
+                  track macros, and reach your health goals.
+                </Text>
+                <Link href="/onboarding" asChild>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                    accessibilityLabel="Start onboarding to set up your profile"
+                  >
+                    <Text className="text-white font-bold text-lg">
+                      Get Started
+                    </Text>
+                  </Button>
+                </Link>
+              </View>
             </Card>
           )}
 
@@ -125,27 +193,31 @@ export default function HomeScreen() {
                 className="text-4xl font-extrabold mb-3"
                 style={{ color: colors["bg-text"] }}
               >
-                {Math.round(totalCalories)} / {goal || "—"}
+                {Math.round(nutritionSummary.totalCalories)} /{" "}
+                {progressValues.goal || "—"}
               </Text>
-              <ProgressBar progress={progress} height={12} />
+              <ProgressBar
+                progress={progressValues.calorieProgress}
+                height={12}
+              />
               <Text
                 className="mt-2 text-sm"
                 style={{
                   color:
-                    caloriesRemaining < 0
+                    progressValues.caloriesRemaining < 0
                       ? colors.danger
                       : colors["bg-text-muted"],
                 }}
               >
-                {caloriesRemaining >= 0
-                  ? `${Math.round(caloriesRemaining)} kcal remaining`
-                  : `Over by ${Math.abs(Math.round(caloriesRemaining))} kcal`}
+                {progressValues.caloriesRemaining >= 0
+                  ? `${Math.round(progressValues.caloriesRemaining)} kcal remaining`
+                  : `Over by ${Math.abs(Math.round(progressValues.caloriesRemaining))} kcal`}
               </Text>
             </Card>
           )}
 
           {/* Macros Card */}
-          {profile && goal > 0 && (
+          {profile && progressValues.goal > 0 && (
             <Card>
               <Text
                 className="text-lg font-semibold mb-3"
@@ -161,12 +233,13 @@ export default function HomeScreen() {
                     Protein
                   </Text>
                   <Text style={{ color: colors["bg-text"] }}>
-                    {Math.round(protein)}g / {macroTargets.protein}g
+                    {Math.round(nutritionSummary.protein)}g /{" "}
+                    {macroTargets.protein}g
                   </Text>
                 </View>
                 <ProgressBar
-                  progress={protein / macroTargets.protein}
-                  color="#10b981"
+                  progress={progressValues.proteinProgress}
+                  color={colors.success}
                   height={8}
                 />
               </View>
@@ -176,12 +249,13 @@ export default function HomeScreen() {
                 <View className="flex-row justify-between mb-1">
                   <Text style={{ color: colors["bg-text-muted"] }}>Carbs</Text>
                   <Text style={{ color: colors["bg-text"] }}>
-                    {Math.round(carbs)}g / {macroTargets.carbs}g
+                    {Math.round(nutritionSummary.carbs)}g / {macroTargets.carbs}
+                    g
                   </Text>
                 </View>
                 <ProgressBar
-                  progress={carbs / macroTargets.carbs}
-                  color="#f59e0b"
+                  progress={progressValues.carbsProgress}
+                  color={colors.warning}
                   height={8}
                 />
               </View>
@@ -191,12 +265,12 @@ export default function HomeScreen() {
                 <View className="flex-row justify-between mb-1">
                   <Text style={{ color: colors["bg-text-muted"] }}>Fat</Text>
                   <Text style={{ color: colors["bg-text"] }}>
-                    {Math.round(fat)}g / {macroTargets.fat}g
+                    {Math.round(nutritionSummary.fat)}g / {macroTargets.fat}g
                   </Text>
                 </View>
                 <ProgressBar
-                  progress={fat / macroTargets.fat}
-                  color="#ef4444"
+                  progress={progressValues.fatProgress}
+                  color={colors.danger}
                   height={8}
                 />
               </View>
@@ -213,7 +287,7 @@ export default function HomeScreen() {
           {profile && todayLogs.length > 0 && (
             <NutritionalInsights
               todayLogs={todayLogs}
-              calorieTarget={goal}
+              calorieTarget={progressValues.goal}
               proteinTarget={macroTargets.protein}
               carbsTarget={macroTargets.carbs}
               fatTarget={macroTargets.fat}
@@ -225,33 +299,35 @@ export default function HomeScreen() {
           {profile && <WeeklyProgress />}
 
           {/* Meal Recommendations */}
-          {profile && caloriesRemaining > 100 && (
+          {profile && progressValues.caloriesRemaining > 100 && (
             <MealRecommendations
               goal={profile.goal}
-              calorieTarget={goal}
+              calorieTarget={progressValues.goal}
               proteinTarget={macroTargets.protein}
-              currentCalories={totalCalories}
-              currentProtein={protein}
+              currentCalories={nutritionSummary.totalCalories}
+              currentProtein={nutritionSummary.protein}
             />
           )}
 
           {/* Meals Section */}
-          <View className="flex-row justify-between items-center">
-            <Text
-              className="text-xl font-bold"
-              style={{ color: colors["bg-text"] }}
-            >
-              Today&apos;s Meals
-            </Text>
-            <Link href="/food/search" asChild>
-              <Button variant="accent" size="sm">
-                <View className="flex-row items-center gap-2">
-                  <Plus size={18} color="#fff" />
-                  <Text className="text-white font-semibold">Add Food</Text>
-                </View>
-              </Button>
-            </Link>
-          </View>
+          <SectionHeader
+            title="Today's Meals"
+            action={
+              <Link href="/food/search" asChild>
+                <Button
+                  variant="accent"
+                  size="sm"
+                  accessibilityLabel="Add food to today's meals"
+                  accessibilityRole="button"
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Plus size={18} color={colors.white} />
+                    <Text className="text-white font-semibold">Add Food</Text>
+                  </View>
+                </Button>
+              </Link>
+            }
+          />
 
           {todayLogs.length === 0 ? (
             <EmptyState
@@ -262,7 +338,7 @@ export default function HomeScreen() {
                 <Link href="/food/search" asChild>
                   <Button variant="primary">
                     <View className="flex-row items-center gap-2">
-                      <Plus size={18} color="#fff" />
+                      <Plus size={18} color={colors.white} />
                       <Text className="text-white font-semibold">
                         Add First Meal
                       </Text>
@@ -276,29 +352,29 @@ export default function HomeScreen() {
               <MealSection
                 emoji="🌅"
                 title="Breakfast"
-                logs={breakfastLogs}
-                totalCalories={breakfastCals}
+                logs={nutritionSummary.breakfastLogs}
+                totalCalories={nutritionSummary.breakfastCals}
                 onEditLog={setEditingLog}
               />
               <MealSection
                 emoji="☀️"
                 title="Lunch"
-                logs={lunchLogs}
-                totalCalories={lunchCals}
+                logs={nutritionSummary.lunchLogs}
+                totalCalories={nutritionSummary.lunchCals}
                 onEditLog={setEditingLog}
               />
               <MealSection
                 emoji="🌙"
                 title="Dinner"
-                logs={dinnerLogs}
-                totalCalories={dinnerCals}
+                logs={nutritionSummary.dinnerLogs}
+                totalCalories={nutritionSummary.dinnerCals}
                 onEditLog={setEditingLog}
               />
               <MealSection
                 emoji="🍿"
                 title="Snacks"
-                logs={snackLogs}
-                totalCalories={snackCals}
+                logs={nutritionSummary.snackLogs}
+                totalCalories={nutritionSummary.snackCals}
                 onEditLog={setEditingLog}
               />
             </View>
@@ -318,6 +394,17 @@ export default function HomeScreen() {
         log={editingLog}
         onClose={() => setEditingLog(null)}
       />
+
+      {/* Floating Action Button */}
+      {profile && (
+        <FloatingButton
+          onPress={() => router.push("/food/search")}
+          accessibilityLabel="Add food to log"
+          testID="fab-add-food"
+        >
+          <Plus size={24} color={colors.white} />
+        </FloatingButton>
+      )}
     </View>
   );
 }

@@ -18,6 +18,8 @@ interface ButtonProps extends Omit<PressableProps, "style"> {
   style?: ViewStyle;
   textClassName?: string;
   haptic?: boolean;
+  accessibilityLabel?: string;
+  accessibilityRole?: "button" | "link" | "none";
 }
 
 export function Button({
@@ -29,6 +31,8 @@ export function Button({
   textClassName = "",
   haptic = true,
   onPress,
+  accessibilityLabel,
+  accessibilityRole = "button",
   ...props
 }: ButtonProps) {
   const { colors } = useAppTheme();
@@ -74,7 +78,7 @@ export function Button({
     if (variant === "secondary" || variant === "ghost") {
       return colors["bg-text"];
     }
-    return "#FFFFFF";
+    return colors.white;
   };
 
   const getPadding = () => {
@@ -97,12 +101,17 @@ export function Button({
         animatedStyle,
         {
           backgroundColor: getBackgroundColor(),
+          minHeight: 44,
+          minWidth: 44,
         },
         style,
       ]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole={accessibilityRole}
       {...props}
     >
       {typeof children === "string" ? (

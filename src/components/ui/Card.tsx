@@ -1,4 +1,5 @@
 import { useAppTheme } from "@/src/hooks/useAppTheme";
+import { getShadowStyle, ShadowSize } from "@/src/utils/shadows";
 import { ReactNode } from "react";
 import { View, ViewStyle } from "react-native";
 
@@ -7,6 +8,7 @@ interface CardProps {
   className?: string;
   style?: ViewStyle;
   noPadding?: boolean;
+  shadowSize?: ShadowSize;
 }
 
 export function Card({
@@ -14,6 +16,7 @@ export function Card({
   className = "",
   style,
   noPadding,
+  shadowSize = "md",
 }: CardProps) {
   const { colors } = useAppTheme();
 
@@ -23,11 +26,7 @@ export function Card({
       style={[
         {
           backgroundColor: colors["bg-100"],
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
+          ...getShadowStyle(shadowSize, colors.black),
         },
         style,
       ]}

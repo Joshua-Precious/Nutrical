@@ -171,9 +171,9 @@ export function NutritionalInsights({
   const IconComponent = (type: "success" | "warning" | "info") => {
     switch (type) {
       case "success":
-        return <CheckCircle2 size={20} color="#10b981" />;
+        return <CheckCircle2 size={20} color={colors.success} />;
       case "warning":
-        return <AlertCircle size={20} color="#f59e0b" />;
+        return <AlertCircle size={20} color={colors.warning} />;
       case "info":
         return <Activity size={20} color={colors.primary} />;
     }
@@ -201,18 +201,18 @@ export function NutritionalInsights({
           <Text style={{ color: colors["bg-text-muted"] }}>Remaining</Text>
           <View className="flex-row items-center gap-1">
             {caloriesRemaining > 0 ? (
-              <TrendingDown size={16} color="#10b981" />
+              <TrendingDown size={16} color={colors.success} />
             ) : (
-              <TrendingUp size={16} color="#ef4444" />
+              <TrendingUp size={16} color={colors.danger} />
             )}
             <Text
               style={{
                 color:
                   caloriesRemaining > 0
-                    ? "#10b981"
+                    ? colors.success
                     : caloriesRemaining < -100
-                      ? "#ef4444"
-                      : "#f59e0b",
+                      ? colors.danger
+                      : colors.warning,
                 fontWeight: "600",
               }}
             >

@@ -117,11 +117,11 @@ export function WeeklyProgress() {
                 color:
                   avgDeficit > 0
                     ? goal === "lose"
-                      ? "#10b981"
-                      : "#f59e0b"
+                      ? colors.success
+                      : colors.warning
                     : goal === "gain"
-                      ? "#10b981"
-                      : "#f59e0b",
+                      ? colors.success
+                      : colors.warning,
                 fontSize: 12,
                 fontWeight: "600",
               }}
@@ -142,9 +142,9 @@ export function WeeklyProgress() {
             </Text>
             <View className="flex-row items-center gap-1">
               {estimatedWeightChange < 0 ? (
-                <TrendingDown size={16} color="#10b981" />
+                <TrendingDown size={16} color={colors.success} />
               ) : (
-                <TrendingUp size={16} color="#3b82f6" />
+                <TrendingUp size={16} color={colors.info} />
               )}
               <Text
                 className="font-bold"
@@ -152,11 +152,11 @@ export function WeeklyProgress() {
                   color:
                     estimatedWeightChange < 0
                       ? goal === "lose"
-                        ? "#10b981"
-                        : "#ef4444"
+                        ? colors.success
+                        : colors.danger
                       : goal === "gain"
-                        ? "#10b981"
-                        : "#3b82f6",
+                        ? colors.success
+                        : colors.info,
                   fontSize: 16,
                 }}
               >
@@ -186,10 +186,10 @@ export function WeeklyProgress() {
               style={{
                 color:
                   consistencyPct >= 85
-                    ? "#10b981"
+                    ? colors.success
                     : consistencyPct >= 60
-                      ? "#f59e0b"
-                      : "#ef4444",
+                      ? colors.warning
+                      : colors.danger,
                 fontSize: 16,
               }}
             >
@@ -206,10 +206,10 @@ export function WeeklyProgress() {
                 width: `${consistencyPct}%`,
                 backgroundColor:
                   consistencyPct >= 85
-                    ? "#10b981"
+                    ? colors.success
                     : consistencyPct >= 60
-                      ? "#f59e0b"
-                      : "#ef4444",
+                      ? colors.warning
+                      : colors.danger,
               }}
             />
           </View>
@@ -269,12 +269,12 @@ export function WeeklyProgress() {
                       width: `${Math.min(100, day.percentage)}%`,
                       backgroundColor:
                         day.percentage >= 90 && day.percentage <= 110
-                          ? "#10b981"
+                          ? colors.success
                           : day.percentage > 110
                             ? goal === "gain"
-                              ? "#3b82f6"
-                              : "#f59e0b"
-                            : "#f59e0b",
+                              ? colors.info
+                              : colors.warning
+                            : colors.warning,
                     }}
                   />
                 </View>

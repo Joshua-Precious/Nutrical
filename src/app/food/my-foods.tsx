@@ -106,7 +106,7 @@ export default function MyFoodsScreen() {
               className="p-2 rounded-lg"
               style={{ backgroundColor: colors["bg-300"] }}
             >
-              <Trash2 size={20} color="#ef4444" />
+              <Trash2 size={20} color={colors.danger} />
             </Pressable>
           </View>
         )}

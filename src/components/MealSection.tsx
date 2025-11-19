@@ -1,6 +1,6 @@
 import { useAppTheme } from "@/src/hooks/useAppTheme";
 import { FoodLog } from "@/src/stores/log.store";
-import { Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import { FoodItemCard } from "./FoodItemCard";
 
 interface MealSectionProps {
@@ -35,9 +35,15 @@ export function MealSection({
           {Math.round(totalCalories)} kcal
         </Text>
       </View>
-      {logs.map((log) => (
-        <FoodItemCard key={log.id} log={log} onEdit={onEditLog} />
-      ))}
+      <FlatList
+        data={logs}
+        keyExtractor={(log) => log.id}
+        renderItem={({ item }) => (
+          <FoodItemCard log={item} onEdit={onEditLog} />
+        )}
+        scrollEnabled={false}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }

@@ -717,7 +717,7 @@ export default function Onboarding() {
             >
               <View
                 className="h-2 rounded-full"
-                style={{ backgroundColor: "#10B981", width: "27%" }}
+                style={{ backgroundColor: colors.protein, width: "27%" }}
               />
             </View>
           </View>
@@ -733,7 +733,7 @@ export default function Onboarding() {
             >
               <View
                 className="h-2 rounded-full"
-                style={{ backgroundColor: "#3B82F6", width: "44%" }}
+                style={{ backgroundColor: colors.carbs, width: "44%" }}
               />
             </View>
           </View>
@@ -749,7 +749,7 @@ export default function Onboarding() {
             >
               <View
                 className="h-2 rounded-full"
-                style={{ backgroundColor: "#F97316", width: "29%" }}
+                style={{ backgroundColor: colors.fat, width: "29%" }}
               />
             </View>
           </View>
